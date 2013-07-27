@@ -1,10 +1,10 @@
 Name: greencard
-Version: 3.0.3
+Version: 3.0.4
 Synopsis: GreenCard, a foreign function pre-processor for Haskell.
 Description:
-   Green Card is a foreign function interface preprocessor for Haskell, simplifying the 
-   task of interfacing Haskell programs to external libraries (which are normally 
-   exposed via C interfaces). 
+   Green Card is a foreign function interface preprocessor for Haskell, simplifying the
+   task of interfacing Haskell programs to external libraries (which are normally
+   exposed via C interfaces).
    .
    To interface to an external function using Green Card, you write a small procedure
    specification. The specification tells Green Card what (Haskell) type you want to
@@ -17,7 +17,7 @@ Description:
    .
    Along with the @greencard@ application binary, this package also supplies the @greencard@
    library/package, consisting of the single module @Foreign.GreenCard@ containing the default
-   GreenCard marshalling functions. 
+   GreenCard marshalling functions.
 Category: Foreign
 License: BSD3
 License-file: LICENSE
