@@ -347,12 +347,14 @@ Try reading a file:
 mbReadFile :: Bool -> String -> IO (Maybe String)
 mbReadFile verbose name =
   Control.Exception.catch
-   ( do
-      ls <- readFile name
-      if verbose
-       then hPutStrLn stderr ("Reading file: " ++ show name)
-       else return ()
-      return (Just ls))
-   ((const (return Nothing)) :: (IOError -> IO (Maybe String)))
+    (do
+       ls <- readFile name
+       when verbose $ hPutStrLn stderr ("Reading file: " ++ show name)
+       return (Just ls))
+    ioErrorsAreNothing
+
+ where
+   ioErrorsAreNothing :: IOError -> IO (Maybe String)
+   ioErrorsAreNothing _ = return Nothing
 
 \end{code}

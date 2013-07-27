@@ -34,8 +34,6 @@ import System.IO.Error ( isEOFError, ioeGetErrorString )
 import qualified Control.Exception  ( catch )
 import Data.List ( isSuffixOf )
 
---type LexCont = (Token -> LexM [Decl]) -> LexM [Decl]
-
 -- components threaded by the monad (apart from
 -- the IO token.)
 data LexState
@@ -72,13 +70,12 @@ isEOF = LexM (\ st@(LexState _ _ cs) -> return (null cs, st))
 
 catchEOF :: LexM a -> LexM a -> LexM a
 catchEOF (LexM cont) (LexM m) =
-  LexM (\ st -> (m st)
-                  `Control.Exception.catch` (\ err ->
-		        if isEOFErr err then
-			   cont st
-			else
-			   ioError err))
+  LexM (\ st -> Control.Exception.catch (m st) (handleIOError $ cont st))
  where
+  handleIOError handler ex
+    | isEOFErr ex = handler
+    | otherwise   = ioError ex
+
   isEOFErr err
    = isEOFError err ||
      "EOF" `isSuffixOf` (ioeGetErrorString err) ||
@@ -115,6 +112,10 @@ setLexState lState = LexM (\ (LexState l _ str) -> return ((), LexState l lState
 
 -----
 
+instance Monad LexM where
+  (>>=)  = thenLexM
+  return = returnLexM
+
 thenLexM :: LexM a -> (a -> LexM b) -> LexM b
 thenLexM (LexM m) n =
  LexM ( \ st -> do
@@ -125,20 +126,4 @@ thenLexM (LexM m) n =
 returnLexM :: a -> LexM a
 returnLexM v = LexM (\ st -> return (v, st) )
 
-{-
-mapLexM :: (a -> b) -> LexM a -> LexM b
-mapLexM f (LexM m) =
- LexM (\ st -> do
-   (x,st1) <- m st
-   return (f x, st1))
--}
-
-instance Monad LexM where
-  (>>=)  = thenLexM
-  return = returnLexM
-
-{-
-instance Functor LexM where
-  map = mapLexM
--}
 \end{code}
