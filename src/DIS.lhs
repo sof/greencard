@@ -8,15 +8,15 @@ module DIS
     , apply
     , ppDIS, ppDIS'
     , expandDIS, DISEnv
-    , freeVarsOfDIS 
+    , freeVarsOfDIS
     , simplify
-    
+
     , default_stdDIS
     ) where
-    
+
 
 import Casm( Kind(..), ppKind )
-import Name( Name ) 
+import Name( Name )
 import ErrMonad
 
 import Text.PrettyPrint
@@ -53,8 +53,8 @@ data DIS
      {-
       Invariant : declared DIS can only be a Var or CCode
      -}
-  | Declare String DIS 
-  | Tuple 
+  | Declare String DIS
+  | Tuple
   | UserDIS Bool         -- are the marshall/unmarshall expressions IO actions?
             (Maybe Kind) -- the primitive type the marshall expression maps to.
             String       -- marshall (+args)
@@ -97,12 +97,12 @@ ppDIS' _ dis = pp dis
   pp (Apply (Record name fs) ds) = text name <+> braces (commaList fields)
    where
     fields = zipWith (\n d -> textline [n, "="] <+> d) fs (pps ds)
-  pp (Apply (Declare expr nm) [d]) = text ("(declare { "   ++ 
-                                                    expr ++ 
-						  " } ") <> 
-						  pp nm  <> 
+  pp (Apply (Declare expr nm) [d]) = text ("(declare { "   ++
+                                                    expr ++
+						  " } ") <>
+						  pp nm  <>
 						  text  " in "  <>
-						  pp d <> 
+						  pp d <>
 						  char ')'
   pp (Apply d ds)                = parens (pp d <+> hsep (pps ds))
   pp (Record _ _)    		 = text "<record>"
@@ -110,11 +110,11 @@ ppDIS' _ dis = pp dis
   pp Tuple             		 = text "()" -- unit
   pp (CCode s)         		 = braces (text s)
   pp (Declare ctype cv)     = text ("declare { " ++ ctype ++ " }") <+> pp cv
-  pp (UserDIS io k ma unma) = 
-        (if io then text "<<" else char '<') <> 
+  pp (UserDIS io k ma unma) =
+        (if io then text "<<" else char '<') <>
 	   text ma   <+>
-        char '/' <> 
-	   text unma <+> 
+        char '/' <>
+	   text unma <+>
         (case k of
 	  Nothing -> empty
 	  Just v  -> char '/' <+> ppKind v) <>
@@ -173,19 +173,19 @@ expandDIS denv dis = expandDIS' [] dis
         return (Apply f' ds')
 
     xp r@(Apply f@(Var nm) ds) =
-        case (lookup nm denv) of 
+        case (lookup nm denv) of
           Just (args, d)
 	    | equalLength args ds -> do
                    ds' <- mapM xp ds
 	           expandDIS' (zip args ds') d
 	    | otherwise ->
-	        failure 
+	        failure
 		 (show $
-		  text "" $$ 
+		  text "" $$
 		  hang (text "")
 		   8   (hang (text "DIS application" <+> quotes (ppDIS r) <+>
 			      text "incompatible with definition:")
-			 4  (text "%dis" <+> hsep (map text (nm:args)) <+> 
+			 4  (text "%dis" <+> hsep (map text (nm:args)) <+>
 			     equals <+> ppDIS d)))
           Nothing -> do
              ds' <- mapM xp ds
@@ -197,7 +197,7 @@ expandDIS denv dis = expandDIS' [] dis
         return (Apply d' ds')
 
     xp v@(Var nm) =
-        case (lookup nm aenv) of 
+        case (lookup nm aenv) of
           Just d   -> return d
           Nothing  -> return v
 
@@ -242,7 +242,7 @@ expandDIS denv dis = expandDIS' [] dis
 			   , show (ppDIS di)
 			   ])
           Nothing -> do
-	       failure (unwords 
+	       failure (unwords
 	       		   [ "Unknown variable"
 	       		   , nm
 			   , "in DIS"
@@ -312,7 +312,7 @@ default_stdDIS = unlines [
    , "%   << makeStablePtr / deRefStablePtr / %%StablePtr >> x"
    , ""
    , "%dis stablePtr x = (%%StablePtr ({HsStablePtr} x))"
-   , "%dis foreignPtr finalizer x = %ForeignPtr {HsForeignPtr} x finalizer"
+   , "%dis foreignPtr finalizer x = %ForeignPtr {HsPtr} x finalizer"
    , ""
    , "%dis foreignP y = foreignPtr {free} y"
    ]
