@@ -26,15 +26,15 @@ import Data.List  ( unzip4, unzip5 )
 \end{code}
 
 \begin{code}
-genProcs :: Target 
-         -> Bool 
-	 -> Bool 
-	 -> Bool 
-	 -> (String, String) 
+genProcs :: Target
+         -> Bool
+	 -> Bool
+	 -> Bool
+	 -> (String, String)
 	 -> String
-	 -> [Decl] 
+	 -> [Decl]
 	 -> ([String], [(Doc, Doc, Doc, Doc)])
-genProcs target safeCalls debugStub forH14 loc mod_name decls = 
+genProcs target safeCalls debugStub forH14 loc mod_name decls =
   runPMs (map (genProc target safeCalls debugStub forH14 mod_name) decls) loc
 \end{code}
 
@@ -53,20 +53,20 @@ o @hcode@ is a Haskell function (and type declaration) which marshalls
 o @ccode@ is any C code that has to be generated as part of the casm.
   (It is empty if the target is GHC.)
 
-o @entry@ 
+o @entry@
   - optional C prototypes to stub functions that performs the
     actual call (and unmarshals the result(s))
 
-o @header@ 
+o @header@
   - optional Haskell declaration for Haskell stub.
 
 \begin{code}
-genProc :: Target 
-	-> Bool 
-	-> Bool 
+genProc :: Target
+	-> Bool
+	-> Bool
 	-> Bool
 	-> String
-	-> Decl 
+	-> Decl
 	-> PM (Doc, Doc, Doc, Doc)
 genProc target gcSafe debugStubs forH14 mod_name
 		    (ProcSpec (loc, name, _, mb_ctxt, typ)
@@ -78,9 +78,9 @@ genProc target gcSafe debugStubs forH14 mod_name
   (av, unpack, ddecls, adecls, as)  <- liftErr (marshallDISs loc target ds)
   (pack, rv, rdecls, rs)	    <- liftErr (unmarshallDIS loc target res)
   (cconv, ext_name)		    <- getSpecLoc
-  let 
+  let
     results               = rs ++ fs
-    end  
+    end
       | not (isJust mbend) = text ""
       | otherwise	   = text (insertIfMissing ';' (fromJust mbend))
 
@@ -93,8 +93,8 @@ genProc target gcSafe debugStubs forH14 mod_name
         GHC_ccall -> rdecls <> fdecls <> ddecls
         FFI -> rdecls <> fdecls <> ddecls
 	_   -> adecls <> ddecls <> rdecls <> fdecls
-    
-    casm = Casm name 
+
+    casm = Casm name
 		ext_name
 		cconv
                 ffi_hfile
@@ -115,11 +115,11 @@ genProc target gcSafe debugStubs forH14 mod_name
 
     (call, hdecl, cprotos, cdecl, entry) = ppCasm target mod_name debugStubs casm
 
-    {- 
+    {-
      The unmarshalling code avoids generating code of the
      form "call >>= \ (res1, ... resm) -> (res1, ... resm)"
      by performing a very simple-minded test.
-     
+
      Since the GHC backend tries to avoid unnecessary uses
      of (return) and (>>=), it binds the result values when
      printing out the Haskell code interfacing with the
@@ -136,23 +136,23 @@ genProc target gcSafe debugStubs forH14 mod_name
 
 		    -- 2/98 SOF
     -}
-    hs_result 
+    hs_result
       = call $$ (if_no_failh (pack res1))
           where
 	    res1 =
 	      case results of
-	        [] -> empty 
+	        [] -> empty
 		_  -> ppReturn rv
 
-  return (    
-            text name <+> text "::" <> 
-	    (if isJust mb_ctxt then 
+  return (
+            text name <+> text "::" <>
+	    (if isJust mb_ctxt then
 	        empty <+> ppType (fromJust mb_ctxt) <+> text "=>"
-	     else 
+	     else
 	        empty) <+> ppType typ
          $$ text name <+>  hsep av   <+> text "="
          $$ indent (
-                wrap 
+                wrap
       	      $ unpack
       	      $ hs_result
       	      )
@@ -168,7 +168,7 @@ genProc target gcSafe debugStubs forH14 mod_name
     is_unsafe d = text "unsafePerformIO(" $$ indent d <> text ")"
 
     ofs'   = fromMaybe [] ofs
-    
+
     (fdecls, fs, if_no_failc, if_no_failh) = failureHandling forH14 ofs'
 
 genProc _ _ _ _ _ (Haskell code)       = return (text code, empty, empty, empty)
@@ -191,7 +191,7 @@ genProc tgt _ _ _ _ (Constant ty defs)
      mkDef (hname, cname) =
        text hname <+> equals <+> (lit_lit cname)
 
-     haskell = 
+     haskell =
        hsep (punctuate comma (map text cons)) <+> text "::" <+> ppType ty $$
        vcat (map mkDef defs)
    in
@@ -210,7 +210,7 @@ genProc target _ _ _ _ (Enum nm ty derivs defs) = do
 			   (text (upperName h))
 			   hole
    marshall_alts   = map ( \ (con, val) -> (text (upperName con), rhs (con,val))) defs
-   unmarshall_alts = foldr mkIf (text ("error (\"unmarshall_"++nm++":\ 
+   unmarshall_alts = foldr mkIf (text ("error (\"unmarshall_"++nm++":\
                                        \ unknown value (\"++show arg1++\")\\n\")"))
 			        defs
 
@@ -224,10 +224,10 @@ genProc target _ _ _ _ (Enum nm ty derivs defs) = do
      hang (unmarshall_nm <+> text "arg1 = ")
       2   unmarshall_alts
 
-   haskell = 
+   haskell =
      hang (text "data" <+> text nm)
       2   (vcat (zipWith (<+>) (equals:repeat (text "|"))
-                               (map (text.upperName) cons) ) $$ 
+                               (map (text.upperName) cons) ) $$
            (text "deriving" <+> ppTuple (map text derivs))) $$
      marshall_fun $$
      unmarshall_fun
@@ -244,18 +244,18 @@ genProc _ _ _ _ _ _            = return (empty, empty, empty, empty)
 %************************************************************************
 
 \begin{code}
-    
+
 failureHandling :: Bool -> Fail -> (Doc, [Param], Doc, Doc -> Doc)
 failureHandling _      [] = (empty, [], empty, id)
-failureHandling forH14 rs = 
+failureHandling forH14 rs =
   ( ppCDecl "int" fn $$ ppCDecl "char*" fs
   , [ Param fn fn fn "int" (Int Natural) False
     , Param fs fs fs "void*" Ptr False
     ]
   , ppCIf [ ( parens (textline [ fn, "= (", p, ")" ])
-            , textline [ fs, "=", s, ";" ] 
+            , textline [ fs, "=", s, ";" ]
             )
-          | (p, s) <- rs ] 
+          | (p, s) <- rs ]
           (Just (textline [ fn, "= 0;" ]))
   , \d -> ppIf (textline ["(", fn, "/= (0::Int))"])
                (textline ["unmarshall_string_", fs, ">>= " , fail_nm , " . userError"])
@@ -286,10 +286,10 @@ marshallDISs loc t ds = do
                      loc t "gc_arg"
  let (ns, ms, ddecls, decls, pss) = unzip5 res
  return (map text ns, foldr (.) id ms, hsep ddecls, hsep decls, concat pss)
-      
+
 unmarshallDIS :: SrcLoc -> Target -> DIS -> ErrM String (Doc -> Doc, Doc, Doc, [Param])
 unmarshallDIS loc t d =
- runMarshallM (((\ d1 -> setDISContext d1 (unmarshall d1)).simplify) d) 
+ runMarshallM (((\ d1 -> setDISContext d1 (unmarshall d1)).simplify) d)
               loc t "gc_res"
 
 \end{code}
@@ -314,8 +314,8 @@ something like this:
   ( (x,y,gc_arg1)
   , \ rest -> case marshall_foo gc_arg1 of { z -> rest }
   , text "int x; float arg2; int z;"
-  , [ Param "x" "x" "int" (Int Natural) False, 
-      Param "arg2" "0.0" "float" Float False, 
+  , [ Param "x" "x" "int" (Int Natural) False,
+      Param "arg2" "0.0" "float" Float False,
       Param "z" "z" "int" (Int Natural) False]
   )
 @
@@ -377,21 +377,21 @@ marshall (Apply (Record c fs) ds) = do
   v <- getNewName
   bits <- mapM marshall ds
   let (ns, ms, ddecls, decls, pss) = unzip5 bits
-  let unpack = ppCase (text v) 
-                      (ppRecord (text c) 
-                                (map text fs) 
+  let unpack = ppCase (text v)
+                      (ppRecord (text c)
+                                (map text fs)
 		        	(map text ns))
   return (v, compose (unpack:ms), hsep ddecls, hsep decls, concat pss)
 
 marshall (Apply (UserDIS io k ma _) [d]) = do
   v <- getNewName
   (n, m, ddecl, decl, ps) <- marshall d
-  let unpack 
+  let unpack
        | io        = \ doc -> ppBind
                               (ppApply (text ma) [text v])
 			      (text n, doc)
        | otherwise = ppCase (ppApply (text ma) [text v]) (text n)
-  case k of 
+  case k of
     Nothing -> return (v, (unpack.m), ddecl, decl, ps)
     Just pk -> do
      t <- getTarget
@@ -401,13 +401,13 @@ marshall (Apply (UserDIS io k ma _) ds) = do
   v <- getNewName
   bits <- mapM marshall ds
   let (ns, ms, ddecls, decls, pss) = unzip5 bits
-  let unpack 
-       | io        = 
+  let unpack
+       | io        =
          \ d -> ppBind
                   (ppApply (text ma) [text v])
 		  (ppTuple (map text ns), d)
        | otherwise = ppCase (ppApply (text ma) [text v]) (ppTuple (map text ns))
-  case k of 
+  case k of
     Nothing -> return (v, compose (unpack:ms), hsep ddecls, hsep decls, concat pss)
     Just _  -> do
      t <- getTarget
@@ -415,17 +415,17 @@ marshall (Apply (UserDIS io k ma _) ds) = do
 
 marshall a@(Apply (Var ('%':t)) ds)
   | t == "Maybe"   =
-    case ds of 
+    case ds of
       [ CCode nothing, just ] -> marshallMaybe nothing just
       _ -> bombWith ("marshall: Malformed %Maybe " ++ show a)
   | t == "ForeignPtr" =
     case ds of -- This is just a special case of giving a kind
-    [CCode cty, arg, CCode free] 
+    [CCode cty, arg, CCode free]
       -> do
            v <- getNewName
            (a, unpacka, ddecls, decls, ps) <- marshall arg
            let -- \ doc -> withForeignPtr ( \ v -> doc )
-               unpack doc =  text "withForeignPtr" <+> text a 
+               unpack doc =  text "withForeignPtr" <+> text a
                              <+> lparen <> text "\\" <+> text v <+> text "->"
                           $$ doc <> rparen
            return ( a
@@ -438,7 +438,7 @@ marshall a@(Apply (Var ('%':t)) ds)
     _ -> bombWith ("marshall: Malformed %ForeignPtr " ++ show a)
   | t == "Foreign" =
     case ds of -- This is just a special case of giving a kind
-    [CCode cty, arg, CCode free] 
+    [CCode cty, arg, CCode free]
       -> let
            cres = case arg of { Var v -> v; CCode res -> res; _ -> error "marshall:cres" }
          in
@@ -461,7 +461,7 @@ marshall (Apply (Var t) ds) = do
   bits <- mapM marshall ds
   let (ns, ms, ddecls, decls, pss) = unzip5 bits
   return ( nm
-         , \e -> ppApply fun [text nm] `ppBind` 
+         , \e -> ppApply fun [text nm] `ppBind`
 	         (ppTuple (map text ns), compose ms e)
          , hsep ddecls
          , hsep decls
@@ -479,7 +479,7 @@ marshall _ = do
 The marshalling of @%Maybe nothing just@ is a little different.
 We generate code like this:
 @
-      case x of 
+      case x of
       Nothing -> return nothing -- should be a tuple
       Just j  -> <unpack j> >>= \ ... ->
                  return (j1,..jn)
@@ -579,16 +579,16 @@ unmarshall (Apply (UserDIS io k _ unma) ds) = do
   v    <- getNewName
   bits <- mapM unmarshall ds
   let (packs, ms, decls, pss) = unzip4 bits
-      
+
       call_unmarshall = ppApply (text unma) [ppTuple ms]
       pack hole
-        | io && 
+        | io &&
           isEmpty hole = call_unmarshall
         | io           = ppBind call_unmarshall (text v, hole)
         | otherwise    = ppLet v call_unmarshall $$ hole
 
 
-      {- HACK!!!: 
+      {- HACK!!!:
          if no unmarshalling of the arguments to the
 	 UserDIS is required (list of Vars), we re-use
 	 the return values (we *know* that the Docs
@@ -596,7 +596,7 @@ unmarshall (Apply (UserDIS io k _ unma) ds) = do
 	 Kind onto the Params while we're at it.
       -}
       Just kind   = k
-      results     = 
+      results     =
         case concat pss of
 	  [] -> map (\ x -> Param (show x) (show x) (show x) "" kind False) ms
           ls -> ls
@@ -605,7 +605,7 @@ unmarshall (Apply (UserDIS io k _ unma) ds) = do
 
 unmarshall v@(Apply (Var ('%':t)) ds)
   | t == "Maybe"
-  = case ds of 
+  = case ds of
      [ CCode nothing, just ] -> unmarshallMaybe (text nothing) just
      _ -> bombWith ("unmarshall: Malformed %Maybe " ++ show v)
   | t == "ForeignPtr"
@@ -618,13 +618,13 @@ unmarshall v@(Apply (Var ('%':t)) ds)
            cres = case a of { Var v3 -> v3; CCode res -> res; _ -> error "unmarshall:cres" }
 
 	    {-
-	      Only declare results when they're of the form 
+	      Only declare results when they're of the form
 	        "%ForeignPtr {cty} x {finaliser}"
-		
-	      falling into line with what is done for non-magical 
+
+	      falling into line with what is done for non-magical
 	      prim types.
 	    -}
-	   decl_cres = 
+	   decl_cres =
 	      case a of
 	         Var _    -> ppCDecl cty cres
 		 CCode _  -> empty
@@ -640,7 +640,7 @@ unmarshall v@(Apply (Var ('%':t)) ds)
 	    -- it leads to arguably clearer code.)
            free' = case free of '&':_ -> free ; _ -> '&':free
 
-           pack c = ppApply newForeignPtr [text v0, text v2] `ppBind` (text v1, c)
+           pack c = ppApply newForeignPtr [text v2, text v0] `ppBind` (text v1, c)
          return ( pack
                 , text v1
 		, decl_cres
@@ -660,13 +660,13 @@ unmarshall v@(Apply (Var ('%':t)) ds)
            cres = case a of { Var v3 -> v3; CCode res -> res; _ -> error "unmarshall:cres" }
 
 	    {-
-	      Only declare results when they're of the form 
+	      Only declare results when they're of the form
 	        "%Foreign {cty} x {finaliser}"
-		
-	      falling into line with what is done for non-magical 
+
+	      falling into line with what is done for non-magical
 	      prim types.
 	    -}
-	   decl_cres = 
+	   decl_cres =
 	      case a of
 	         Var _    -> ppCDecl cty cres
 		 CCode _  -> empty
@@ -754,7 +754,7 @@ unmarshallMaybe nothing just = do
 \begin{code}
 
 compose :: [ (a -> a) ] -> (a -> a)
-compose = foldr (.) id 
+compose = foldr (.) id
 
 cast :: String{-c type-} -> String{-expr-} -> String
 cast cty e = ("("++cty++')':'(':e++")")
@@ -779,8 +779,8 @@ type PMState = (String,String) -- current callconv and ext dll. name
 
 instance Monad PM where
   return v  = PM (\ x -> (x, return v))
-  (>>=) (PM m) f = 
-    PM (\ x -> 
+  (>>=) (PM m) f =
+    PM (\ x ->
 	  case m x of
 	    (x', em) ->
 		case em of
@@ -802,7 +802,7 @@ runPMs :: [PM a] -> (String,String) -> ([String], [a])
 runPMs ls loc = go loc ls
   where
     go _   [] = ([],[])
-    go acc ((PM x):xs) = 
+    go acc ((PM x):xs) =
        case x acc of
          (acc', res) ->
 	    let (as,bs) = go acc' xs in
@@ -826,7 +826,7 @@ begin{code}
 -- type Proc = (Sig, Call, Doc, Fail, Result)
 
 proc1 :: Proc
-proc1 = 
+proc1 =
     ( ("foo", TypeVar "Int" `Arrow` TypeVar "Float")
     , [tuple [int "arg1", int "arg2"]]
     , text "res=(float)(arg1+arg2)"
