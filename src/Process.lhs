@@ -16,6 +16,7 @@ import ListUtils ( prefix, dropSuffix, elemBy,
                    mkHaskellVar, lowerName, decons,
 		   mplusMaybe, basename
 		 )
+import qualified Control.Exception( catch )
 import Control.Monad( when )
 import Data.Char( isAlphaNum )
 import Text.PrettyPrint
@@ -43,19 +44,19 @@ import Type   ( ppType )
 of a mechanism to hide away from view all its arguments.
 
 \begin{code}
-processFile :: Target 
-            -> Bool 
-	    -> Bool 
-	    -> Bool 
-	    -> Bool 
+processFile :: Target
+            -> Bool
+	    -> Bool
+	    -> Bool
+	    -> Bool
 	    -> Bool
 	    -> Bool
 	    -> (String,String)
 	    -> [String]
-	    -> [String] 
-	    -> String 
-	    -> String 
-	    -> String 
+	    -> [String]
+	    -> String
+	    -> String
+	    -> String
 	    -> IO ()
 processFile target debug debugStub verbose safe forH14 mangle loc path exts file hfile cfile = do
   mbrawdecls <- tryRead verbose path exts file
@@ -68,14 +69,14 @@ processFile target debug debugStub verbose safe forH14 mangle loc path exts file
       includes = [ i | Include i <- rawdecls ]
       prefixes = sortBy lengthCmp $ "" : [n | Prefix n <- rawdecls]
        where
-        lengthCmp x y = compare (length y) (length x) 
+        lengthCmp x y = compare (length y) (length x)
 
     emit debug "Parsed" (showDecls rawdecls)
 --    emit debug "Protos" (render (vsepMap ppProtoProc protoProcs))
 --    emit debug "Consts" (render (vsepMap ppProtoProc constProcs))
     let
      mod_name = basename (dropSuffix hfile)
-     (fillin_errs, decls)  = fillInDecls disDefs prefixes target mangle rawdecls 
+     (fillin_errs, decls)  = fillInDecls disDefs prefixes target mangle rawdecls
      (marshall_errs, code) = genProcs target safe debugStub forH14 loc mod_name decls
 
     case fillin_errs ++ marshall_errs of
@@ -92,7 +93,7 @@ processFile target debug debugStub verbose safe forH14 mangle loc path exts file
           where
           c       = renderLn (vcat ccode)
           haskell = unlines (["{-# OPTIONS -#include " ++ s ++ " #-}"
-                             | s <- includes 
+                             | s <- includes
                              ])  ++
                     renderLn (vcat hcode)
 
@@ -127,7 +128,7 @@ processFile target debug debugStub verbose safe forH14 mangle loc path exts file
           where
           hc_hfile_ffi = (dropSuffix cfile) ++ ".h"
           haskell = renderLn (vcat hcode) -- add newline at the end.
-          c       = 
+          c       =
 	        renderLn (ppHeader (includes ++ [show hc_hfile_ffi]) $$
 	  	          vcat ccode')
           protos_ffi = renderLn (  text "#ifndef" <+> text prot_symb
@@ -203,13 +204,13 @@ getDISdefs verbose decls path exts file = do
 
       isDissy (DisDef nm args dis) = Just (nm, (args, dis))
 	-- create a straightforward (user) DIS on-the-fly for %enums.
-      isDissy (Enum nm ty _ _)     
+      isDissy (Enum nm ty _ _)
        = let
 	  -- %dis nm x = <marshall_nm/unmarshall_nm> (int x)
           args = ["x"]
 	  dis  = Apply (UserDIS False Nothing ("marshall_"++nm) ("unmarshall_"++nm))
 		       [Apply (Var (lowerName (show (ppType ty)))) [Var "x"]]
-         in 
+         in
 	 Just (mkHaskellVar nm, (args, dis))
       isDissy _ = Nothing
 
@@ -233,10 +234,10 @@ names of the modules imported plus their declarations.
 type Imports = [(String,[Decl])]
 
 chaseImports :: Bool -> [String] -> [String] -> [String] -> Imports -> IO Imports
-chaseImports _ _ _ [] seen 
+chaseImports _ _ _ [] seen
   = return (reverse seen) -- local decls take precedence over imported ones.
 
-chaseImports verbose path exts (file:files) seen 
+chaseImports verbose path exts (file:files) seen
   | alreadySeen = chaseImports verbose path exts files seen
   | otherwise   = do
       (imports,decls) <- getImports verbose path exts file
@@ -248,13 +249,13 @@ chaseImports verbose path exts (file:files) seen
 getImports :: Bool -> [String] -> [String] -> String -> IO ([String], [Decl])
 getImports verbose path exts file = do
   mb_decls <- tryRead verbose path exts file
-  let decls = fromMaybe [] mb_decls 
+  let decls = fromMaybe [] mb_decls
   return (getDeclImports decls, decls)
 
 getDeclImports :: [Decl] -> [String]
 getDeclImports decls = catMaybes [mbImportName s | Haskell s <- decls]
 \end{code}
-      
+
 \begin{code}
 
 tryRead :: Bool -> [String] -> [String] -> String -> IO (Maybe [Decl])
@@ -262,7 +263,7 @@ tryRead verbose path exts name = do
   res <- doUntil (mbReadFile verbose)
                  (allFileNames path name exts)
   maybe sorry frontEnd res
- where 
+ where
   frontEnd ls = do
     v <- runLexer name gcParse ls
     return (Just v)
@@ -308,11 +309,11 @@ All filenames with prefix from @path@ and suffix from @exts@.
 \begin{code}
 
 allFileNames :: [String] -> String -> [String] -> [String]
-allFileNames path file exts 
+allFileNames path file exts
   = [addSuffix '/' d ++ f ++ (prefixWith '.' ext) | d <- path, f <- deHierarchialize file, ext <- exts]
     where
      addSuffix _  []  = []
-     addSuffix ch ls  = 
+     addSuffix ch ls  =
         case (decons ls) of
 	  (_,x)
 	    | x == ch   -> ls
@@ -331,7 +332,7 @@ non-hierarchial filename.
 \begin{code}
 
 deHierarchialize :: FilePath -> [FilePath]
-deHierarchialize f 
+deHierarchialize f
   | '.' `elem` f = [f, subst '.' '/' f, subst '.' '\\' f]
   | otherwise    = [f]
  where
@@ -344,14 +345,14 @@ Try reading a file:
 \begin{code}
 
 mbReadFile :: Bool -> String -> IO (Maybe String)
-mbReadFile verbose name = 
-  catch 
+mbReadFile verbose name =
+  Control.Exception.catch
    ( do
       ls <- readFile name
-      if verbose 
+      if verbose
        then hPutStrLn stderr ("Reading file: " ++ show name)
        else return ()
       return (Just ls))
-   (const (return Nothing))
+   ((const (return Nothing)) :: (IOError -> IO (Maybe String)))
 
 \end{code}

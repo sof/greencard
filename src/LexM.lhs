@@ -5,11 +5,11 @@
 The @LexM@ hides the information maintained by the Green Card lexer
 
 \begin{code}
-module LexM 
+module LexM
 
        (
          LexM
-	
+
        , runLexM     -- :: String -> LexM a -> IO a
        , ioToLexM    -- :: IO a   -> LexM a
        , incLineNo   -- :: LexM a -> LexM a
@@ -23,13 +23,15 @@ module LexM
        , getLineNo   -- :: LexM LineNo
        , getLexState -- :: LexM Int
        , setLexState -- :: Int -> LexM ()
-       
+
        , thenLexM
        , returnLexM
        ) where
 
 import Decl
+
 import System.IO.Error ( isEOFError, ioeGetErrorString )
+import qualified Control.Exception  ( catch )
 import Data.List ( isSuffixOf )
 
 --type LexCont = (Token -> LexM [Decl]) -> LexM [Decl]
@@ -45,7 +47,7 @@ data LexState
 newtype LexM a = LexM (  LexState -> IO (a, LexState))
 
 runLexM :: String
-        -> String 
+        -> String
         -> LexM a
 	-> IO a
 runLexM fname str (LexM m) = do
@@ -59,7 +61,7 @@ ioToLexM act =
 	 return (v, st))
 
 incLineNo :: LexM a -> LexM a
-incLineNo (LexM m) = 
+incLineNo (LexM m) =
  LexM (\ (LexState loc a b) -> m (LexState (incSrcLineNo loc) a b))
 
 getSrcLoc :: LexM SrcLoc
@@ -70,30 +72,30 @@ isEOF = LexM (\ st@(LexState _ _ cs) -> return (null cs, st))
 
 catchEOF :: LexM a -> LexM a -> LexM a
 catchEOF (LexM cont) (LexM m) =
-  LexM (\ st -> (m st) 
-                  `catch` (\ err -> 
+  LexM (\ st -> (m st)
+                  `Control.Exception.catch` (\ err ->
 		        if isEOFErr err then
 			   cont st
 			else
 			   ioError err))
  where
   isEOFErr err
-   = isEOFError err || 
+   = isEOFError err ||
      "EOF" `isSuffixOf` (ioeGetErrorString err) ||
       -- workaround ghc-5.04 ioeGetErrorString oddity.
      "\"EOF\"" `isSuffixOf` (ioeGetErrorString err)
 
 
 getNextChar :: LexM Char
-getNextChar = 
-  LexM (\ (LexState loc lst str) -> 
+getNextChar =
+  LexM (\ (LexState loc lst str) ->
       case str of
        []     -> ioError (userError "EOF")
        (c:cs) -> return (c, LexState loc lst cs))
 
 putBackChar :: Char -> LexM ()
-putBackChar c = 
-  LexM ( \ (LexState loc lst cs) -> 
+putBackChar c =
+  LexM ( \ (LexState loc lst cs) ->
            return ((), LexState loc lst (c:cs)))
 
 getStream :: LexM String
@@ -135,7 +137,7 @@ instance Monad LexM where
   (>>=)  = thenLexM
   return = returnLexM
 
-{- 
+{-
 instance Functor LexM where
   map = mapLexM
 -}
