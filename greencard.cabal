@@ -53,27 +53,17 @@ Extra-source-files: README
                     src/Package.lhs.in
                     src/Makefile
 
-flag old-base
-  description: Old, monolithic base
-  default: False
-
 library {
   hs-source-dirs: lib
   Exposed-Modules: Foreign.GreenCard
   include-dirs: lib
   install-includes: GreenCard.gc
- if flag(old-base)
-   Build-Depends: base < 3
- else
    Build-Depends: base >= 4
 }
 
 executable greencard {
   main-is:        GreenCard.lhs
- if flag(old-base)
-   Build-Depends: base < 3
- else
-   Build-Depends: base >= 4
+  Build-Depends: base >= 4
   build-depends:  pretty, containers, array
   hs-source-dirs: src
   c-sources:      src/ErrorHook.c
