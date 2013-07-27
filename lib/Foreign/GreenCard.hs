@@ -7,10 +7,11 @@
 module Foreign.GreenCard
         ( module Foreign
         , module Foreign.C
+	, unsafePerformIO
 
         , MbString
         , marshall_bool_,      unmarshall_bool_
-        , marshall_string_,    unmarshall_string_   
+        , marshall_string_,    unmarshall_string_
         , marshall_stringLen_, unmarshall_stringLen_
 	   -- re-exporting base Prelude types
 	   -- (useful when generating source that
@@ -20,7 +21,7 @@ module Foreign.GreenCard
 	, Char
         ) where
 
-import Foreign
+import Foreign hiding (unsafePerformIO)
 import Foreign.C
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -50,7 +51,7 @@ marshall_string_ :: [Char] -> IO CString
 marshall_string_ = newCString
 
 marshall_stringLen_ :: [Char] -> IO CStringLen
-marshall_stringLen_ = newCStringLen 
+marshall_stringLen_ = newCStringLen
 
 unmarshall_string_ :: CString -> IO String
 unmarshall_string_ = peekCString
@@ -65,8 +66,8 @@ unmarshall_stringLen_ ptr l = peekCStringLen (ptr, l)
 
 --
 -- Use "stable" to create a stable pointer
--- 
--- Use "stablePtr" to manipulate (previously constructed) stable pointers 
+--
+-- Use "stablePtr" to manipulate (previously constructed) stable pointers
 -- in Haskell.
 --
 
@@ -77,8 +78,8 @@ unmarshall_stringLen_ ptr l = peekCStringLen (ptr, l)
 
 --
 -- Use "foreignP" to create a stable pointer
--- 
--- Use "foreignPtr" to manipulate (previously constructed) foreign pointers 
+--
+-- Use "foreignPtr" to manipulate (previously constructed) foreign pointers
 -- in Haskell.
 --
 
