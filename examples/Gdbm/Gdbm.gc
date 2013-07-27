@@ -1,0 +1,205 @@
+%#include "gdbmplus.h"
+{-
+	Copyright (c) 1998 Canon Research Centre Europe (CRE).
+
+	You may redistribute and modify this module, provided you duplicate
+	all of the original copyright notices and associated disclaimers.
+	If you have modified the module in any way, you must document the
+	changes, and include a reference to the original distribution.
+ 
+	THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+	WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES
+	OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE. 
+
+    Green Card file for Gdbm interface
+
+    GDBM allocates memory whenever it returns objects. We make use of
+    "ForeignPtr" so that they free the memory when garbage collected.
+
+    At the moment, the interface is limited to data represented as
+    null-terminated strings (on the C side), unless you are willing to provide
+    your own functions for manipulating blocks of data via a pointer.
+-}
+
+module Gdbm
+
+where
+
+import Foreign.GreenCard
+import Foreign.C
+
+%#include <stdlib.h>
+
+-- Maybe over Ptrs: you get Nothing from a NULL address
+%dis maybePtr x = maybeT {nullPtr} (ptr x)
+
+type Addr = Ptr ()
+%dis addr x = ptr ({HsPtr} x)
+
+type ForeignObj = ForeignPtr ()
+%dis foreignObj x = foreignP x
+
+-- ============================== Datum Handling ==============================
+-- Data type for passing and fetching data.
+-- It contains a pointer to the data, and the size of the data
+-- Maybe doesn't work well with foreign objects, so we check it in access
+-- functions on Datums
+data Datum = Datum (ForeignPtr ()) Int
+%dis datum x y = Datum (foreignObj x) (int y)
+
+{- The data in a datum is a pointer, but often we will work with strings. So
+   here are functions for converting between them. They use the standard Green
+   Card marshalling functions. This means that the length is ignored and we
+   rely on a null for termination. If you want lower level access to the data,
+   you can directly extract the foreignobj from the datum.
+-}   
+
+string_to_ptr :: String -> CString
+string_to_ptr s = unsafePerformIO (newCString s)
+
+ptr_to_string :: CString -> String
+ptr_to_string a = unsafePerformIO (peekCString a)
+
+-- Convert a foreign object to an address and vice-versa
+%fun foreign_to_ptr :: ForeignPtr () -> Maybe CString
+%call (foreignObj p)
+%code {}
+%result (maybePtr {p})
+
+%fun ptr_to_foreign :: CString -> ForeignPtr ()
+%call (addr p)
+%code
+%result (foreignObj {p})
+
+
+
+-- Normally you will interact with Datum structure via the following:
+
+--   Make a datum.
+--   Adds one to length to ensure we have a final null, and for compatibility
+--   with other GDBM interfaces at CRE
+mkDatum :: String -> Datum
+mkDatum s = Datum (ptr_to_foreign (string_to_ptr s)) (length s+1)
+
+--   Unpack a datum to a string
+upkDatum (Datum f _) = case foreign_to_ptr f of
+ Nothing  -> error "tried to upkDatum when Datum was Nothing"
+ Just f'  -> ptr_to_string f'
+
+--   Check validity of a datum
+isDatum (Datum f _) = case foreign_to_ptr f of
+ Nothing  -> False
+ Just f'  -> True
+
+
+-- ========================= Files and Modes  ==============================
+-- Gdbm file handle.
+-- It does not get freed by garbage collection: you must explicitly close it
+-- addrT seems to be missing from StdDIS.gc, so we mimic what addr does
+type Gdbmfile = Addr
+%dis gdbmfile f = addr ({GDBM_FILE} f)
+-- %dis gdbmfile f = addrT{ GDBM_FILE } f
+
+
+-- Opening modes
+%const Gdbm_OpenMode [Gdbm_reader, Gdbm_writer, Gdbm_wrcreat, Gdbm_newdb]
+type Gdbm_OpenMode = Int
+%dis gdbm_OpenMode m = int m
+
+-- Store modes
+%const Gdbm_StoreMode [Gdbm_replace, Gdbm_insert]
+type Gdbm_StoreMode = Int
+%dis gdbm_StoreMode m = int m
+
+-- Error codes
+%const GdbmError [GDBM_NO_ERROR, GDBM_MALLOC_ERROR, GDBM_BLOCK_SIZE_ERROR, GDBM_FILE_OPEN_ERROR, GDBM_FILE_WRITE_ERROR, GDBM_FILE_SEEK_ERROR, GDBM_FILE_READ_ERROR, GDBM_BAD_MAGIC_NUMBER, GDBM_EMPTY_DATABASE, GDBM_CANT_BE_READER, GDBM_CANT_BE_WRITER, GDBM_READER_CANT_DELETE, GDBM_READER_CANT_STORE, GDBM_READER_CANT_REORGANIZE, GDBM_UNKNOWN_UPDATE, GDBM_ITEM_NOT_FOUND, GDBM_REORGANIZE_FAILED, GDBM_CANNOT_REPLACE, GDBM_ILLEGAL_DATA, GDBM_OPT_ALREADY_SET, GDBM_OPT_ILLEGAL]
+type GdbmError = Int
+%dis gdbmError m = int m
+
+
+
+-- =========================== Non-Monadic version ============================
+-- There is no error check on opening: you musy make sure the handle is OK
+-- The function gdbm_valid_handle will do this
+
+%fun gdbm_open :: String -> Gdbm_OpenMode -> Gdbmfile
+%call (string name) (gdbm_OpenMode mode)
+%code handle = gdbm_open(name, 0, mode, Permissions, 0);
+%result (gdbmfile handle)
+
+%fun gdbm_fetch :: Gdbmfile -> Datum -> Datum
+%call (gdbmfile handle) (datum ptr size)
+%code datum key, result; key.dptr = ptr; key.dsize = size; result = gdbm_fetch(handle, key);
+%result (datum {result.dptr} {result.dsize})
+
+%fun gdbm_firstkey :: Gdbmfile -> Datum
+%call (gdbmfile handle)
+%code datum result; result = gdbm_firstkey(handle);
+%result (datum {result.dptr} {result.dsize})
+
+%fun gdbm_nextkey :: Gdbmfile -> Datum -> Datum
+%call (gdbmfile handle) (datum ptr size)
+%code datum key, result; key.dptr = ptr; key.dsize = size; result = gdbm_nextkey(handle, key);
+%result (datum {result.dptr} {result.dsize})
+
+%fun gdbm_valid_handle :: Gdbmfile -> Bool
+%call (gdbmfile handle)
+%code
+%result (bool {handle != NULL})
+
+-- ============================== Monadic version ==============================
+-- The monadic version of open will fail if the file cannot be opened
+-- The other functions just return Nothing datums
+-- You can also check the error code
+%fun openDB :: String -> Gdbm_OpenMode -> IO Gdbmfile
+%call (string name) (gdbm_OpenMode mode)
+%code handle = gdbm_open(name, 0, mode, Permissions, 0);
+%fail {handle == NULL} {gdbm_strerror(gdbm_errno)}
+%result (gdbmfile handle)
+
+%fun closeDB :: Gdbmfile -> IO ()
+%code gdbm_close(arg1);
+
+-- Returns 0 if OK, 1 or -1 on error
+%fun storeDB :: Gdbmfile -> Datum -> Datum -> Gdbm_StoreMode -> IO Int
+%call (gdbmfile handle) (datum ptr1 size1) (datum ptr2 size2) (gdbm_StoreMode mode)
+%code datum key, value; key.dptr=ptr1; key.dsize=size1; value.dptr=ptr2; value.dsize=size2;
+%result (int {gdbm_store(handle, key, value, mode)})
+
+%fun fetchDB :: Gdbmfile -> Datum -> IO Datum
+%call (gdbmfile handle) (datum ptr size)
+%code datum key, result; key.dptr = ptr; key.dsize = size; result = gdbm_fetch(handle, key);
+%result (datum {result.dptr} {result.dsize})
+
+-- Returns -1 on error, 0 on success
+%fun deleteDB :: Gdbmfile -> Datum -> IO Int
+%call (gdbmfile handle) (datum ptr size)
+%code datum key; key.dptr=ptr; key.dsize=size;
+%result (int {gdbm_delete(handle, key)})
+
+%fun firstKeyDB :: Gdbmfile -> IO Datum
+%call (gdbmfile handle)
+%code datum result; result = gdbm_firstkey(handle);
+%result (datum {result.dptr} {result.dsize})
+
+%fun nextKeyDB :: Gdbmfile -> Datum -> IO Datum
+%call (gdbmfile handle) (datum ptr size)
+%code datum key, result; key.dptr = ptr; key.dsize = size; result = gdbm_nextkey(handle, key);
+%result (datum {result.dptr} {result.dsize})
+
+-- Returns 0 if OK, negative number on error
+%fun reorganizeDB :: Gdbmfile -> IO Int
+%code
+%result (int {gdbm_reorganize(arg1)})
+
+%fun syncDB :: Gdbmfile -> IO ()
+%code gdbm_sync(arg1);
+
+-- ============================== Errors ==============================
+%fun lastDBError_string :: IO String
+%code
+%result (string {gdbm_strerror(gdbm_errno)})
+
+%fun lastDBError :: IO (GdbmError)
+%code
+%result (gdbmError {gdbm_errno})

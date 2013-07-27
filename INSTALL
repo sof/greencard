@@ -1,0 +1,18 @@
+Compilation and install instructions for Green Card:
+====================================================
+
+On Unix using GHC:
+
+  # Note that you must run this as root because the install-pkg
+  # target invokes ghc-pkg.
+  su
+  make prefix=$HOME install install-pkg
+
+On Unix using Hugs:
+
+  make prefix=$HOME HC=hugs install install-pkg
+
+On Windows using cygwin using GHC:
+
+  make prefix=c:/greencard/gc-3.00 install install-pkg
+

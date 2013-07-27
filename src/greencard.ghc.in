@@ -1,0 +1,4 @@
+#!/bin/sh
+gc_libdir=@libdir@
+# Mini-driver for GreenCard
+exec ${gc_libdir}/greencard-bin --libdir=${gc_libdir} ${1+"$@"}

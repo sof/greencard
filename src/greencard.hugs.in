@@ -1,0 +1,5 @@
+#!/bin/sh
+gc_libdir=@libdir@
+gc_srcdir=@libdir@/src
+# Mini-driver for GreenCard
+runhugs -h2m -c100 -P${gc_srcdir}: ${gc_srcdir}/GreenCard.lhs --libdir=${gc_libdir} ${1+"$@"}

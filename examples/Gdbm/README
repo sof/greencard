@@ -1,0 +1,20 @@
+Here is a green card interface for Gdbm (the gnu database package). Any
+comments are welcome, to dahe@cre.canon.co.uk. The code comes with no
+guarantees, and testing has been fairly superficial. Also, see the files
+themselves for legal disclaimers. There's a sample makefile as well, because
+you need some wacky options to the ghc.
+
+You need the header gdbmplus.h to make things compile, as well as the gnu
+gdbm files. If you want to use it with Windows, you'll need to change some of
+the gdbm source files. Why? Because the authors of gdbm forgot to set the
+binary flag when they open the files. "diffs" lists the changes.
+
+Good luck!
+-- David Elworthy
+
+_______________________________________________________________________
+David Elworthy <dahe@cre.canon.co.uk>
+Canon Research Centre Europe Ltd., Guildford, Surrey, UK
+URL: http://www.cre.canon.co.uk/
+Phone: +44 1483 448844; Fax: +44 1483 448845
+

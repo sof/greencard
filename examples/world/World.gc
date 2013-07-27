@@ -1,0 +1,19 @@
+--
+-- A very simple example of a GreenCard module, to help get you started.
+--
+
+module World where
+
+import Foreign.GreenCard
+
+%#include <stdio.h>
+
+-- define a function foo, implemented in C, but callable from Haskell
+-- via GreenCard.
+-- This function prints its arguments, and then returns its second
+-- argument (incremented by 5.0)
+%fun foo :: String -> Double -> IO Double
+%code printf("entering foo()...:\n");
+%     printf("called with arguments: (\"%s\", %f)\n", arg1, arg2); 
+%     res1 = arg2 + 5.0;
+%     printf("foo() returning...\n"); fflush(stdout);

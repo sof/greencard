@@ -1,0 +1,131 @@
+			   Green Card 3.01
+	A Foreign Function Interface Preprocessor for Haskell
+
+In preparation for a major release of Green Card, we are making an
+alpha release for GHC folk to play with.  This release fixes a bunch
+of little details that people commented on in the 3.00 release.
+
+This is a major release of Green Card, a foreign function interface
+pre-processor for Haskell.  GreenCard 3.00 has been updated to work
+with Haskell compilers that support the foreign function interface and
+hierarchial libraries.
+
+The major changes from the 2.x series of GreenCard are:
+
+ - Support for hierarchial module names.
+ - The StdDIS module has been renamed Foreign.GreenCard.
+ - Support for all the types provided by the FFI specification.
+ - Removed deprecated types like Addr: use the Ptr type provided
+   by the FFI specification.
+ - The Hugs and NHC-specific backends has been removed since FFI
+   support renders it irrelevant.
+
+Pointers to downloadable distributions, documentation etc.
+is available via the Green Card home page:
+
+   http://www.haskell.org/greencard/
+
+Please send any bug reports or suggestions for improvements to
+alastair at reid-consulting-uk.ltd.uk.
+
+Enjoy!
+-----
+			   Green Card 3.00
+	A Foreign Function Interface Preprocessor for Haskell
+
+In preparation for a major release of Green Card, we are making an
+alpha release for GHC folk to play with.
+
+GreenCard is a foreign function interface pre-processor for Haskell.
+GreenCard 3.00 has been updated to work with Haskell compilers that
+support the foreign function interface and hierarchial libraries.
+
+The major changes from the 2.x series of GreenCard are:
+
+ - Support for hierarchial module names.
+ - The StdDIS module has been renamed Foreign.GreenCard.
+ - Support for all the types provided by the FFI specification.
+ - Removed deprecated types like Addr: use the Ptr type provided
+   by the FFI specification.
+ - The Hugs and NHC-specific backends has been removed since FFI
+   support renders it irrelevant.
+
+Pointers to downloadable distributions, documentation etc.
+is available via the Green Card home page:
+
+   http://www.haskell.org/greencard/
+
+Please send any bug reports or suggestions for improvements to
+Alastair Reid <alastair at reid-consulting-uk.ltd.uk>.
+
+Enjoy!
+-----
+			   Green Card 2.05
+	A Foreign Function Interface Preprocessor for Haskell
+
+This is a refresh release of Green Card, no major change in
+functionality.
+-----
+
+			    Green Card 2.04
+	A Foreign Function Interface Preprocessor for Haskell
+
+This is a refresh release of Green Card, updating the source to work
+with current (Aug 2002) Haskell systems. & including fixes for minor
+bugs since the last release (Nov 2001).
+
+-----
+			    Green Card 2.03
+	A Foreign Function Interface Preprocessor for Haskell
+
+This is a refresh release of Green Card, updating the source to work
+with current (Nov 2001) Haskell systems & including fixes for minor
+bugs since the last release (Nov 1999).
+
+-----
+			    Green Card 2.02
+	A Foreign Function Interface Preprocessor for Haskell
+
+This is the second public release of Green Card, a foreign function
+interface pre-processor for Haskell. 
+
+* What is it?
+=============
+
+Green Card is a foreign function interface preprocessor for Haskell,
+simplifying the task of interfacing Haskell programs to external
+libraries.
+
+* What's new in Green Card v2 (vs. Green Card 0.9, released April '97)
+=====================================================================
+
+ - major rewrite to support two new target backends (in addition
+   to the original GHC one) for Hugs and NHC.
+ - DIS extensions
+ - improved error handling & reporting.
+ - Extended %const syntax.
+ - New annotation '%safecode'
+ - New backend which generates stubs compatible with Hugs/GHC
+   foreign function interface.
+ - New annotation '%enum'
+ - Green Card has now got a license.
+
+* More information
+==================
+
+Pointers to downloadable distributions, documentation etc.
+is available via the Green Card home page:
+
+   http://www.haskell.org/greencard/
+
+To compile the Green Card sources, you'll need to have a
+Haskell98 system, such as Hugs98 or ghc-4.02 (or later).
+
+* Bug reports/feedback
+======================
+
+Please send any bug reports or suggestions for improvements to
+the Glasgow Haskell Bugs list <glasgow-haskell-bugs@haskell.org)
+
+Enjoy!
+

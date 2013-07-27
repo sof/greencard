@@ -1,0 +1,35 @@
+#
+# Makefile for building World example for hugs on Win32, using
+# Cygwin's GNU make, Microsoft's Visual C++ compiler and GreenCard.
+#
+
+# site-specific definitions:
+
+# Path to GreenCard (install) directory.
+# Should contain Foreign/GreenCard.gc
+
+GCHUGSLIB = ../../lib
+
+# end site-specific definitions
+
+# greencard executable:
+GC = greencard
+
+# Hugs executable:
+FFIHUGS = ffihugs
+
+OBJS = World.o World_stub_ffi.o
+
+all : World.hs World.so
+
+# Rule for building .hs and .c files from .gc files:
+%.hs %_stub_ffi.c %_stub_ffi.h : %.gc
+	$(GC) $(GCOPTS) $<
+
+%.so : %.hs %_stub_ffi.c %_stub_ffi.h
+	$(FFIHUGS) -P$(GCHUGSLIB): +G $< +L"$*_stub_ffi.c" $(LIBS)
+
+clean : FRC
+	rm -f *.so *.o *.dll *.exp *~ *.ilk *.lib *.pdb World.hs
+
+FRC:

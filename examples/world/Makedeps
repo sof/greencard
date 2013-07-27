@@ -1,0 +1,6 @@
+# DO NOT DELETE: Beginning of Haskell dependencies
+World.o : World.hs
+World.o : C:\greencard\gc-2.03\lib\ghc/StdDIS.hi
+Main.o : Main.hs
+Main.o : ./World.hi
+# DO NOT DELETE: End of Haskell dependencies

@@ -1,0 +1,16 @@
+#
+# Makefile for building GreenCard example using Cygwin's GNU make and
+# ghc-6.0 and GreenCard 3.00.
+#
+
+# site-specific definitions:
+
+# end site-specific definitions
+
+
+# platform-specific definitions:
+
+# end platform-specific definitions
+
+include Makedefs.ghc
+

@@ -1,0 +1,27 @@
+Package {
+	name		= PACKAGE,
+	auto		= True,
+#ifdef INSTALLING
+	import_dirs	= [ LIBDIR"/imports" ],
+#else
+	import_dirs	= [ LIBDIR"/imports" ],
+#endif
+	source_dirs	= [],
+#ifdef INSTALLING
+	library_dirs	= [ LIBDIR ],
+#else
+	library_dirs	= [ LIBDIR ],
+#endif
+	hs_libraries	= [ LIBRARY ],
+	extra_libraries	= [],
+#ifdef INSTALLING
+        include_dirs    = [],
+#else
+        include_dirs    = [],
+#endif
+	c_includes	= [],
+	package_deps	= [ PACKAGE_DEPS ],
+	extra_ghc_opts	= [],
+	extra_cc_opts	= [],
+	extra_ld_opts	= []
+}

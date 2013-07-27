@@ -1,0 +1,51 @@
+#
+# Common Makefile definitions for building GreenCard example using
+# Cygwin's GNU make, ghc-6.00 and GreenCard 3.00.
+#
+
+# greencard executable:
+GC = greencard
+
+HC = ghc
+HC_OPTS = -cpp -fglasgow-exts -package greencard $(INCLUDES)
+
+LDFLAGS += -L.
+
+DEPFILE = Makedeps
+
+HSFILES = World.hs Main.hs
+
+all : libworld.a main
+
+depend : World.hs FRC
+	$(HC) $(HC_OPTS) -M -optdep-f -optdep$(DEPFILE) $(HSFILES)
+
+libworld.a :	World.o World_stub_ffi.o
+	ar rv libworld.a $^
+
+main : Main.o libworld.a 
+	$(HC) $(LDFLAGS) $(HC_OPTS) -o main Main.o -lworld 
+
+%.o : %.hs
+	$(HC) $(HC_OPTS) -c $< -o $@
+
+%.o : %.c
+	$(HC) $(CC_OPTS) -c $< -o $@
+
+%.hs %_stub_ffi.c %_stub_ffi.h: %.gc
+	$(GC) $<
+
+%.hi : %.o ;
+
+clean : FRC
+	rm -f main *.so *.hi *.a *.exe *.bak *.BAK *.o *.dll *.exp *~ *.ilk *.lib *.pdb World.hs
+
+FRC:
+
+# If you want to include external dependencies, generated via the 'depend'
+# target, uncomment the following line:
+# include $(DEPFILE)
+
+World.o : World.hs
+Main.o : Main.hs
+Main.o : World.hi

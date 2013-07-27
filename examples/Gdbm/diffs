@@ -1,0 +1,40 @@
+diff -r gdbm-windows/gdbmopen.c gdbm-1.7.3/gdbmopen.c
+128c128
+<       dbf->desc = open (dbf->name, O_RDONLY|O_BINARY, 0);
+---
+>       dbf->desc = open (dbf->name, O_RDONLY, 0);
+132c132
+<       dbf->desc = open (dbf->name, O_RDWR|O_BINARY, 0);
+---
+>       dbf->desc = open (dbf->name, O_RDWR, 0);
+136c136
+<       dbf->desc = open (dbf->name, O_RDWR|O_CREAT|O_BINARY, mode);
+---
+>       dbf->desc = open (dbf->name, O_RDWR|O_CREAT, mode);
+142c142
+<       dbf->desc = open (dbf->name, O_RDWR|O_CREAT|O_BINARY, mode);
+---
+>       dbf->desc = open (dbf->name, O_RDWR|O_CREAT, mode);
+
+diff -r gdbm-windows/systems.h gdbm-1.7.3/systems.h
+29,32d28
+< #ifdef MSDOS
+< #include <malloc.h>
+< #include <io.h>
+< #endif /* MSDOS */
+74,79d69
+< /* Fix for MSDOS: no flock at all */
+< #ifdef MSDOS
+< #define UNLOCK_FILE(dbf) 
+< #define READLOCK_FILE(dbf) lock_val = 0
+< #define WRITELOCK_FILE(dbf) lock_val = 0
+< #else /* MSDSOS */
+133d122
+< #endif /* MSDOS */
+146,148d134
+< #ifdef MSDOS
+< #define fsync(f) _commit(f); /* Rob's fix */
+< #else /* MSDSOS */
+150d135
+< #endif /* MSDOS */
+

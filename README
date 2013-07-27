@@ -1,0 +1,5 @@
+This is the top-level directory for Green Card, a foreign function
+interface pre-processor for Haskell.
+
+For details of how to compile this distribution, please consult the
+INSTALL file. 
