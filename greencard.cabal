@@ -58,13 +58,12 @@ library {
   Exposed-Modules: Foreign.GreenCard
   include-dirs: lib
   install-includes: GreenCard.gc
-   Build-Depends: base >= 4
+  build-depends: base >= 4
 }
 
 executable greencard {
   main-is:        GreenCard.lhs
-  Build-Depends: base >= 4
-  build-depends:  pretty, containers, array
+  build-depends:  base >= 4, pretty, containers, array
   hs-source-dirs: src
   c-sources:      src/ErrorHook.c
   other-modules:  Process
