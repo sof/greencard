@@ -7,7 +7,7 @@
 GC = greencard
 
 HC = ghc
-HC_OPTS = -cpp -fglasgow-exts -package greencard $(INCLUDES)
+HC_OPTS = -cpp -package greencard $(INCLUDES)
 
 LDFLAGS += -L.
 
@@ -23,8 +23,8 @@ depend : World.hs FRC
 libworld.a :	World.o World_stub_ffi.o
 	ar rv libworld.a $^
 
-main : Main.o libworld.a 
-	$(HC) $(LDFLAGS) $(HC_OPTS) -o main Main.o -lworld 
+main : Main.o libworld.a
+	$(HC) $(LDFLAGS) $(HC_OPTS) -o main Main.o -lworld
 
 %.o : %.hs
 	$(HC) $(HC_OPTS) -c $< -o $@
