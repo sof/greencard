@@ -5,16 +5,16 @@
 	all of the original copyright notices and associated disclaimers.
 	If you have modified the module in any way, you must document the
 	changes, and include a reference to the original distribution.
- 
+
 	THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
 	WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES
-	OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE. 
+	OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 -}
 
 module Main where
 
 import Gdbm
-import IO
+import System.IO
 
 -- Two versions: monadic and non-monadic
 
