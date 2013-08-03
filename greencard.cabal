@@ -1,5 +1,5 @@
 Name: greencard
-Version: 3.0.4
+Version: 3.0.4.1
 Synopsis: GreenCard, a foreign function pre-processor for Haskell.
 Description:
    Green Card is a foreign function interface preprocessor for Haskell, simplifying the
@@ -23,6 +23,7 @@ License: BSD3
 License-file: LICENSE
 Author: Alastair Reid <alastair@reid-consulting-uk.ltd.uk>, Sigbjorn Finne <sof@forkIO.com>, Thomas Nordin.
 Maintainer: Sigbjorn Finne <sof@forkIO.com>
+Homepage: https://github.com/sof/greencard
 Cabal-version: >= 1.2
 Build-type: Simple
 Extra-source-files: README
