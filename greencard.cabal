@@ -1,5 +1,5 @@
 Name: greencard
-Version: 3.0.4.1
+Version: 3.0.4.2
 Synopsis: GreenCard, a foreign function pre-processor for Haskell.
 Description:
    Green Card is a foreign function interface preprocessor for Haskell, simplifying the
@@ -59,12 +59,12 @@ library {
   Exposed-Modules: Foreign.GreenCard
   include-dirs: lib
   install-includes: GreenCard.gc
-  build-depends: base <= 5
+  build-depends: base >= 4.7 && <= 5
 }
 
 executable greencard {
   main-is:        GreenCard.lhs
-  build-depends:  base <= 5, pretty, containers, array
+  build-depends:  base >= 4.7 && <= 5, pretty, containers, array
   hs-source-dirs: src
   c-sources:      src/ErrorHook.c
   other-modules:  Process
