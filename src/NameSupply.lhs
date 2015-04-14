@@ -15,6 +15,7 @@ module NameSupply
 	) where
 
 import Name( Name )
+import Control.Monad (ap)
 
 \end{code}
 
@@ -30,11 +31,13 @@ type NameSupply = [Name]
 
 newtype NSM a = NSM (NameSupply -> (a, NameSupply))
 
-{- Try to do without this one for now - Haskell compatibility pitfall.
 instance Functor NSM where
-  map f (NSM g) = NSM (\ns -> let (a, ns') = g ns 
-                              in  (f a, ns'))
--}
+  fmap f (NSM g) = NSM (\ns -> let (a, ns') = g ns 
+                               in  (f a, ns'))
+
+instance Applicative NSM where
+  pure = return
+  (<*>)  = ap
 
 instance Monad NSM where
   (NSM f) >>= g	= 

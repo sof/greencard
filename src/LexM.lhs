@@ -34,6 +34,8 @@ import System.IO.Error ( isEOFError, ioeGetErrorString )
 import qualified Control.Exception  ( catch )
 import Data.List ( isSuffixOf )
 
+import Control.Monad (ap)
+
 -- components threaded by the monad (apart from
 -- the IO token.)
 data LexState
@@ -111,6 +113,15 @@ setLexState :: Int -> LexM ()
 setLexState lState = LexM (\ (LexState l _ str) -> return ((), LexState l lState str))
 
 -----
+
+instance Functor LexM where
+  fmap f (LexM m) = LexM $ \st -> do
+    (a, st') <- m st
+    return (f a, st')
+
+instance Applicative LexM where
+  pure = return
+  (<*>) = ap
 
 instance Monad LexM where
   (>>=)  = thenLexM
