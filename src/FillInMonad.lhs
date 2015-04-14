@@ -20,6 +20,7 @@ module FillInMonad
 import qualified ErrMonad as EM
 import DIS  (DISEnv)
 import Target (Target)
+import Control.Monad (ap)
 \end{code}
 
 \begin{code}
@@ -77,11 +78,12 @@ instance Monad FilM where
   (>>=)  = thenFilM
   return = returnFilM
 
-{- Try to do without this one for now - 
-   leads to Haskell compatibility troubles.
+instance Applicative FilM where
+  pure = return
+  (<*>) = ap
+
 instance Functor FilM where
-  map f (FilM act) = FilM (\ env pre tgt m -> do
-			     v <- act env pre tgt m
-			     return (f v))
--}
+  fmap f (FilM act) = FilM (\ env pre tgt m -> do
+        		      v <- act env pre tgt m
+        		      return (f v))
 \end{code}

@@ -28,6 +28,7 @@ import Decl ( SrcLoc )
 import DIS  ( DIS )
 import ErrMonad
 import Target (Target)
+import Control.Monad (ap)
 
 \end{code}
 
@@ -67,10 +68,12 @@ mapMarshallM f (MarshallM g) =
 	    Succeeded (v,st') -> 
                 return (f v, st'))
 
-{-
 instance Functor MarshallM where
    fmap = mapMarshallM
--}
+
+instance Applicative MarshallM where
+  pure = return
+  (<*>) = ap
 
 instance Monad MarshallM where
   (MarshallM f) >>= g	= 

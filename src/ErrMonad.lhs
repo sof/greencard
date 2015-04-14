@@ -18,6 +18,7 @@ module ErrMonad
        , mapErrM	 -- :: (a -> b) -> ErrM a -> ErrM b
        ) where
 
+import Control.Monad (ap)
 \end{code}
 
 \begin{code}
@@ -31,13 +32,12 @@ mapErrM f e =
       Failed    err -> Failed err
       Succeeded v   -> Succeeded (f v)
 
-{- Don't define this as long as there's bound to be 
-   significant pre-Haskell 98 systems out there in
-   circulation.
-
 instance Functor (ErrM a) where
   fmap = mapErrM
--}
+
+instance Applicative (ErrM a) where
+  pure = return
+  (<*>) = ap
 
 instance Monad (ErrM a) where
   (>>=) m f =

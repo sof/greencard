@@ -22,6 +22,7 @@ import ListUtils ( insertIfMissing, lowerName, upperName,
 		 )
 import Data.Maybe ( fromMaybe, isJust, fromJust )
 import Data.List  ( unzip4, unzip5 )
+import Control.Monad (ap)
 
 \end{code}
 
@@ -776,6 +777,14 @@ Layer our own little monad on top of the error one:
 data PM a = PM (PMState -> (PMState, ErrM String a))
 
 type PMState = (String,String) -- current callconv and ext dll. name
+
+instance Functor PM where
+  fmap f (PM m) = PM $ \st ->
+    let (st', a) = m st in (st', mapErrM f a)
+
+instance Applicative PM where
+  pure = return
+  (<*>) = ap
 
 instance Monad PM where
   return v  = PM (\ x -> (x, return v))
